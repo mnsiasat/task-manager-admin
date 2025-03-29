@@ -1,7 +1,19 @@
-import type { NextConfig } from "next";
+import type { Configuration } from 'webpack'
+import type { NextConfig } from 'next'
 
+/** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  webpack: (config: Configuration) => {
+    config.resolve = config.resolve ?? {}
+    config.resolve.fallback = {
+      async_hooks: false,
+      fs: false,
+      child_process: false,
+      os: false,
+      path: false,
+    }
+    return config
+  },
+}
 
-export default nextConfig;
+module.exports = nextConfig
