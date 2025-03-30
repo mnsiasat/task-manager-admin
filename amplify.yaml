@@ -1,0 +1,26 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm install
+        # Retrieve the API key from Parameter Store and set it as an environment variable
+        - export NEXT_PUBLIC_API_KEY=$(aws ssm get-parameter --name "/NEXT_PUBLIC_API_KEY" --with-decryption --query "Parameter.Value" --output text)
+    build:
+      commands:
+        - npm run build
+  environment:
+    variables:
+      NEXT_PUBLIC_API_URL: "https://p1eq1jesrb.execute-api.ap-northeast-1.amazonaws.com/Dev/tasks"
+      NEXT_PUBLIC_API_KEY: $NEXT_PUBLIC_API_KEY
+  artifacts:
+    baseDirectory: out  # or `.next` for Next.js apps
+    files:
+      - '**/*'  # Include all files in the output directory
+  cache:
+    paths: []  # Disabling caching of build artifacts
+  customHeaders:
+    - pattern: '**/*'
+      headers:
+        - key: 'Cache-Control'
+          value: 'no-store, max-age=0, must-revalidate'

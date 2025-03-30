@@ -9,35 +9,16 @@ export interface CountPerStatus {
   taskStatus: Status
 }
 
-export const getSummary = async (): Promise<CountPerStatus[]> => {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}`, {
-    method: 'GET',
-    headers: {
-      'x-api-key': `${process.env.NEXT_PUBLIC_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-  })
-  const data = await res.json()
-  let summary: CountPerStatus[] = []
-
-  if (Array.isArray(data)) {
-    summary = data.map((item) => ({
-      taskStatus: item.status,
-      count: item._count.status,
-    }))
-  } else {
-    console.error('Response is not an array')
-  }
-  return summary
+const headers = {
+  'x-api-key': `${process.env.NEXT_PUBLIC_API_KEY}`,
+  'Content-Type': 'application/json',
+  'Cache-Control': 'no-cache', // Ensures that the browser does not use a cached response
 }
 
 export const getTasks = async (): Promise<Task[]> => {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}`, {
     method: 'GET',
-    headers: {
-      'x-api-key': `${process.env.NEXT_PUBLIC_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
+    headers,
   })
   return res.json()
 }
@@ -45,10 +26,7 @@ export const getTasks = async (): Promise<Task[]> => {
 export const deleteTask = async (id: string) => {
   await fetch(`${process.env.NEXT_PUBLIC_API_URL}/${id}`, {
     method: 'DELETE',
-    headers: {
-      'x-api-key': `${process.env.NEXT_PUBLIC_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
+    headers,
   })
   revalidatePath('/')
 }
@@ -56,10 +34,7 @@ export const deleteTask = async (id: string) => {
 async function executePut(input: UpdateTaskDto) {
   return await fetch(`${process.env.NEXT_PUBLIC_API_URL}/${input.id}`, {
     method: 'PUT',
-    headers: {
-      'x-api-key': `${process.env.NEXT_PUBLIC_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify(input),
   })
 }
@@ -67,10 +42,7 @@ async function executePut(input: UpdateTaskDto) {
 async function executePost(input: CreateTaskDto) {
   return await fetch(`${process.env.NEXT_PUBLIC_API_URL}`, {
     method: 'POST',
-    headers: {
-      'x-api-key': `${process.env.NEXT_PUBLIC_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify(input),
   })
 }
@@ -106,4 +78,23 @@ export const saveTask = async (formData: FormData) => {
   }
 
   revalidatePath('/')
+}
+
+export const getSummary = async (): Promise<CountPerStatus[]> => {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}`, {
+    method: 'GET',
+    headers
+  })
+  const data = await res.json()
+  let summary: CountPerStatus[] = []
+
+  if (Array.isArray(data)) {
+    summary = data.map((item) => ({
+      taskStatus: item.status,
+      count: item._count.status,
+    }))
+  } else {
+    console.error('Response is not an array')
+  }
+  return summary
 }
