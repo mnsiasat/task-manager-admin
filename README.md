@@ -19,4 +19,4 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 ## Deployment
 
 This repository is integrated with AWS Amplify and will automatically trigger deployment when changes merged to master.
-You may access deployed application here [https://master.d33hahkjoppla.amplifyapp.com/](https://master.d33hahkjoppla.amplifyapp.com/)
+You may access deployed application here [https://master.d94tf3pnoebv9.amplifyapp.com/](https://master.d94tf3pnoebv9.amplifyapp.com/)
