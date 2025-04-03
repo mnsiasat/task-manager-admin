@@ -9,40 +9,42 @@ export interface CountPerStatus {
   taskStatus: Status
 }
 
-const headers = {
-  'x-api-key': `${process.env.NEXT_PUBLIC_API_KEY}`,
-  'Content-Type': 'application/json',
-  'Cache-Control': 'no-cache', // Ensures that the browser does not use a cached response
+const initObject = {
+  headers: {
+    'x-api-key': `${process.env.NEXT_PUBLIC_API_KEY}`,
+    'Content-Type': 'application/json',
+  },
+  cache: 'no-store' as RequestCache,
 }
 
 export const getTasks = async (): Promise<Task[]> => {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}`, {
+    ...initObject,
     method: 'GET',
-    headers,
   })
   return res.json()
 }
 
 export const deleteTask = async (id: string) => {
   await fetch(`${process.env.NEXT_PUBLIC_API_URL}/${id}`, {
+    ...initObject,
     method: 'DELETE',
-    headers,
   })
   revalidatePath('/')
 }
 
 async function executePut(input: UpdateTaskDto) {
   return await fetch(`${process.env.NEXT_PUBLIC_API_URL}/${input.id}`, {
+    ...initObject,
     method: 'PUT',
-    headers,
     body: JSON.stringify(input),
   })
 }
 
 async function executePost(input: CreateTaskDto) {
   return await fetch(`${process.env.NEXT_PUBLIC_API_URL}`, {
+    ...initObject,
     method: 'POST',
-    headers,
     body: JSON.stringify(input),
   })
 }
@@ -82,8 +84,8 @@ export const saveTask = async (formData: FormData) => {
 
 export const getSummary = async (): Promise<CountPerStatus[]> => {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}`, {
+    ...initObject,
     method: 'GET',
-    headers
   })
   const data = await res.json()
   let summary: CountPerStatus[] = []
