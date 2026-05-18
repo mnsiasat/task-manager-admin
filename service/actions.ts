@@ -1,5 +1,6 @@
 'use server'
 
+import { auth } from '@/auth'
 import { Task, Status, UpdateTaskDto, CreateTaskDto } from '@/dto/task.dto'
 import { revalidatePath } from 'next/cache'
 import { removeEmptyProperties, stringToEnum } from '@/utils'
@@ -9,32 +10,56 @@ export interface CountPerStatus {
   taskStatus: Status
 }
 
-const initObject = {
-  headers: {
-    'x-api-key': `${process.env.NEXT_PUBLIC_API_KEY}`,
-    'Content-Type': 'application/json',
-  },
-  cache: 'no-store' as RequestCache,
+async function getAuthorizedInit() {
+  const session = await auth()
+
+  if (!session?.accessToken) {
+    throw new Error('Unauthorized: missing access token')
+  }
+
+  return {
+    headers: {
+      Authorization: `Bearer ${session.accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    cache: 'no-store' as RequestCache,
+  }
 }
 
 export const getTasks = async (): Promise<Task[]> => {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}`, {
+  const initObject = await getAuthorizedInit()
+
+  const res = await fetch(`${process.env.API_URL}`, {
     ...initObject,
     method: 'GET',
   })
+
+  if (!res.ok) {
+    throw new Error('Failed to fetch tasks')
+  }
+
   return res.json()
 }
 
 export const deleteTask = async (id: string) => {
-  await fetch(`${process.env.NEXT_PUBLIC_API_URL}/${id}`, {
+  const initObject = await getAuthorizedInit()
+
+  const res = await fetch(`${process.env.API_URL}/${id}`, {
     ...initObject,
     method: 'DELETE',
   })
+
+  if (!res.ok) {
+    throw new Error('Failed to delete task')
+  }
+
   revalidatePath('/')
 }
 
 async function executePut(input: UpdateTaskDto) {
-  return await fetch(`${process.env.NEXT_PUBLIC_API_URL}/${input.id}`, {
+  const initObject = await getAuthorizedInit()
+
+  return fetch(`${process.env.API_URL}/${input.id}`, {
     ...initObject,
     method: 'PUT',
     body: JSON.stringify(input),
@@ -42,7 +67,9 @@ async function executePut(input: UpdateTaskDto) {
 }
 
 async function executePost(input: CreateTaskDto) {
-  return await fetch(`${process.env.NEXT_PUBLIC_API_URL}`, {
+  const initObject = await getAuthorizedInit()
+
+  return fetch(`${process.env.API_URL}`, {
     ...initObject,
     method: 'POST',
     body: JSON.stringify(input),
@@ -71,8 +98,8 @@ export const saveTask = async (formData: FormData) => {
     }
 
     if (!response.ok) {
-      const { errors } = await response.json()
-      console.error(errors)
+      const data = await response.json().catch(() => null)
+      console.error(data)
       return
     }
   } catch (error) {
@@ -83,10 +110,17 @@ export const saveTask = async (formData: FormData) => {
 }
 
 export const getSummary = async (): Promise<CountPerStatus[]> => {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}`, {
+  const initObject = await getAuthorizedInit()
+
+  const res = await fetch(`${process.env.API_URL}`, {
     ...initObject,
     method: 'GET',
   })
+
+  if (!res.ok) {
+    throw new Error('Failed to fetch summary')
+  }
+
   const data = await res.json()
   let summary: CountPerStatus[] = []
 
@@ -95,8 +129,7 @@ export const getSummary = async (): Promise<CountPerStatus[]> => {
       taskStatus: item.status,
       count: item._count.status,
     }))
-  } else {
-    console.error('Response is not an array')
   }
+
   return summary
 }
